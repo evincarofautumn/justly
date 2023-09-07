@@ -1,6 +1,6 @@
 //! Collections that don’t need extra bounds-checking.
 //!
-//! **Justy** implements “justified” wrappers
+//! **Justly** implements “justified” wrappers
 //! for the standard Rust data structures
 //! in [`std::collections`].
 //! A *justified container* is one whose keys,
@@ -10,7 +10,7 @@
 //!
 //! # Trustworthiness
 //!
-//! Justy is built on the idea of **trustworthy knowledge**:
+//! Justly is built on the idea of **trustworthy knowledge**:
 //! [`call::Call`] represents a value called by a name,
 //! which lets you encode *knowledge* about that named thing,
 //! such as [`key::Key`], an index that you know is valid.
@@ -23,17 +23,17 @@
 //!
 //! A “checked” method is one that performs bounds checking,
 //! and an “unchecked” method is one that *unsafely* omits it.
-//! Methods in Justy that *safely* omit bounds checks
+//! Methods in Justly that *safely* omit bounds checks
 //! are called **check-free**.
 //! The Rust compiler attempts to elide checks
 //! when it can prove that they will always succeed.
-//! Justy implements check-free APIs
+//! Justly implements check-free APIs
 //! by giving you the tools to prove that checks can be skipped.
 //!
 //! It’s worth noting that some checks are strictly necessary!
 //! For example, you *must* do a runtime test
 //! to tell whether an arbitrary integer index is a valid key.
-//! Justy only lets you avoid *extra* checks,
+//! Justly only lets you avoid *extra* checks,
 //! which are not strictly necessary,
 //! yet the compiler cannot prove it.
 //! But once you have gotten a typed key,
@@ -42,7 +42,7 @@
 //!
 //! Also, most indices that you get from the collection APIs
 //! are already known to be valid keys,
-//! so Justy merely adds that information in its wrapper APIs.
+//! so Justly merely adds that information in its wrapper APIs.
 //!
 //! # No invalid indices
 //!
@@ -111,7 +111,7 @@
 //! println!("{}", v[j]);  // logic error (68)
 //! ```
 //!
-//! So Justy wraps those *mutating* methods
+//! So Justly wraps those *mutating* methods
 //! that could invalidate the keys of a collection
 //! in *consuming* methods that give back a modified object,
 //! along with information about how the new keys
@@ -388,7 +388,7 @@ pub mod link {
     /// about the relationship between `body` and `'name`.
     /// If you want that,
     /// you must make a newtype wrapper around it,
-    /// or use one of the wrappers that Justy already offers,
+    /// or use one of the wrappers that Justly already offers,
     /// like [`crate::key::Key`].
     ///
     /// # TODO

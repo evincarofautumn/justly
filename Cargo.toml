@@ -1,6 +1,6 @@
 [package]
 
-name = "justy"
+name = "justly"
 version = "0.1.0"
 
 description = "An implementation of justified containers"

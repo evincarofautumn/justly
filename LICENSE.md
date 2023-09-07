@@ -1,6 +1,6 @@
 # License
 
-Justy is distributed under the terms of the MIT license,
+Justly is distributed under the terms of the MIT license,
 whose text is reproduced below.
 
 ----------------------------------------------------------------
