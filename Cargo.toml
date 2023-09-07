@@ -1,6 +1,10 @@
 [package]
+
 name = "justy"
 version = "0.1.0"
+
+description = "An implementation of justified containers"
 edition = "2021"
+license = "MIT"
 
 [dependencies]
