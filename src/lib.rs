@@ -1,5 +1,7 @@
 //! Collections that don’t need extra bounds-checking.
 //!
+//! # Overview
+//!
 //! **Justly** implements “justified” wrappers
 //! for the standard Rust data structures
 //! in [`std::collections`].
@@ -8,7 +10,7 @@
 //! keep track of their validity.
 //! This has a few major consequences, listed below.
 //!
-//! # Trustworthiness
+//! ## Trustworthiness
 //!
 //! Justly is built on the idea of **trustworthy knowledge**:
 //! [`call::Call`] represents a value called by a name,
@@ -19,7 +21,7 @@
 //! and so you can rely on it to build safe abstractions.
 //! Now unchecked indexing can be well and truly safe!
 //!
-//! # No extra checks
+//! ## No extra checks
 //!
 //! A “checked” method is one that performs bounds checking,
 //! and an “unchecked” method is one that *unsafely* omits it.
@@ -44,7 +46,7 @@
 //! are already known to be valid keys,
 //! so Justly merely adds that information in its wrapper APIs.
 //!
-//! # No invalid indices
+//! ## No invalid indices
 //!
 //! When referring to elements in a collection,
 //! Rust encourages using *indices*, relative to the collection,
@@ -119,6 +121,42 @@
 //!
 //! We do this with phantom type parameters,
 //! so there is no runtime cost.
+//!
+//! # About this documentation
+//!
+//! Wrapper types and methods are annotated with tags
+//! that describe their purpose, which are marked
+//! with curly braces `{…}` for easier searching.
+//!
+//! ## {free}
+//!
+//! Marks methods that used to require bounds-checking
+//! on the original type, but are now check-free.
+//!
+//! ## {just}
+//!
+//! On a container type, this says
+//! that the type is a wrapper for a plain container
+//! where some methods use typestate to add safety.
+//!
+//! On a method, it marks places
+//! where we change the signature, typically either:
+//!
+//! * Taking ownership of `self`
+//!   to replace a `mut` method on the wrapped type
+//!   with one that tracks knowledge about the container
+//!
+//! * Adding wrappers such as [`key::Key`]
+//!   to record some knowledge about the result
+//!
+//! ## {like}
+//!
+//! Links to the original wrapped thing.
+//!
+//! ## {safe}
+//!
+//! Marks things that used to be `unsafe` (usually *unchecked*)
+//! but are now safe (implying check-freedom).
 //!
 //! # TODO
 //!
@@ -430,7 +468,24 @@ pub mod prop {
 
 pub mod vec {
 
-    //! Like [`mod@std::vec`].
+    //! [**{just}**](crate#just)
+    //! [{like}](crate#like):[`mod@std::vec`]
+    //! [{like}](crate#like):[`mod@std::slice`]
+    //!
+    //! `Vec<'name, T>` is a thin wrapper
+    //! around a named vector, `Call<'name, std::vec::Vec<T>>`,
+    //! which you can make
+    //! using the [`crate::called::Called`] trait.
+    //!
+    //! As is typical for this library,
+    //! the `Vec` wrapper replaces some methods
+    //! with versions that track the state of the container
+    //! to prove that unchecked indexing is safe,
+    //! and offer some additional features enabled by this.
+    //!
+    //! The types `Slice` and `MutSlice`
+    //! are similar thin wrappers for slices, and likewise
+    //! `ConstPtr` and `MutPtr` for pointers.
 
     use super::call::{forge, Call};
     use super::key::Key;
@@ -447,122 +502,166 @@ pub mod vec {
 
     /// A vector bestowed with a name.
     ///
+    /// # Extensions
+    ///
+    /// - `contains_key`
+    /// - `reverse_mut`
+    ///
+    /// # `Vec` support
+    ///
+    /// - [ ] [`std::vec::Vec::allocator()`]
+    /// - [ ] [`std::vec::Vec::append()`]
+    /// - [x] [`std::vec::Vec::as_mut_ptr()`]]
+    /// - [x] [`std::vec::Vec::as_mut_slice()`]
+    /// - [x] [`std::vec::Vec::as_ptr()`]
+    /// - [x] [`std::vec::Vec::as_slice()`]
+    /// - [x] [`std::vec::Vec::capacity()`]
+    /// - [ ] [`std::vec::Vec::clear()`]
+    /// - [ ] [`std::vec::Vec::dedup()`]
+    /// - [ ] [`std::vec::Vec::dedup_by()`]
+    /// - [ ] [`std::vec::Vec::dedup_by_key()`]
+    /// - [ ] [`std::vec::Vec::drain()`]
+    /// - [ ] [`std::vec::Vec::extend_from_slice()`]
+    /// - [ ] [`std::vec::Vec::extend_from_within()`]
+    /// - [x] [`std::vec::Vec::from_raw_parts()`]
+    /// - [ ] [`std::vec::Vec::from_raw_parts_in()`]
+    /// - [ ] [`std::vec::Vec::insert()`]
+    /// - [ ] [`std::vec::Vec::into_boxed_slice()`]
+    /// - [ ] [`std::vec::Vec::into_flattened()`]
+    /// - [ ] [`std::vec::Vec::into_raw_parts()`]
+    /// - [ ] [`std::vec::Vec::into_raw_parts_with_alloc()`]
+    /// - [ ] [`std::vec::Vec::leak()`]
+    /// - [x] [`std::vec::Vec::len()`]
+    /// - [x] [`std::vec::Vec::new()`]
+    /// - [ ] [`std::vec::Vec::new_in()`]
+    /// - [ ] [`std::vec::Vec::pop()`]
+    /// - [x] [`std::vec::Vec::push()`]
+    /// - [ ] [`std::vec::Vec::push_within_capacity()`]
+    /// - [ ] [`std::vec::Vec::remove()`]
+    /// - [x] [`std::vec::Vec::reserve()`]
+    /// - [x] [`std::vec::Vec::reserve_exact()`]
+    /// - [ ] [`std::vec::Vec::resize()`]
+    /// - [ ] [`std::vec::Vec::resize_with()`]
+    /// - [ ] [`std::vec::Vec::retain()`]
+    /// - [ ] [`std::vec::Vec::retain_mut()`]
+    /// - [ ] [`std::vec::Vec::set_len()`]
+    /// - [ ] [`std::vec::Vec::shrink_to()`]
+    /// - [ ] [`std::vec::Vec::shrink_to_fit()`]
+    /// - [ ] [`std::vec::Vec::spare_capacity_mut()`]
+    /// - [ ] [`std::vec::Vec::splice()`]
+    /// - [ ] [`std::vec::Vec::split_at_spare_mut()`]
+    /// - [ ] [`std::vec::Vec::split_off()`]
+    /// - [ ] [`std::vec::Vec::swap_remove()`]
+    /// - [x] [`std::vec::Vec::truncate()`]
+    /// - [x] [`std::vec::Vec::try_reserve_exact()`]
+    /// - [x] [`std::vec::Vec::with_capacity()`]
+    /// - [ ] [`std::vec::Vec::with_capacity_in()`]
+    ///
+    /// # `slice` support
+    ///
+    /// - [ ] [`slice::align_to()`]
+    /// - [ ] [`slice::align_to_mut()`]
+    /// - [ ] [`slice::array_chunks()`]
+    /// - [ ] [`slice::array_chunks_mut()`]
+    /// - [ ] [`slice::array_windows()`]
+    /// - [ ] [`slice::as_chunks()`]
+    /// - [ ] [`slice::as_chunks_mut()`]
+    /// - [ ] [`slice::as_chunks_unchecked_mut()`]
+    /// - [ ] [`slice::as_chunks_unchecked()`]
+    /// - [x] [`slice::as_mut_ptr_range()`]
+    /// - [x] [`slice::as_ptr_range()`]
+    /// - [ ] [`slice::as_rchunks()`]
+    /// - [ ] [`slice::as_rchunks_mut()`]
+    /// - [ ] [`slice::as_simd()`]
+    /// - [ ] [`slice::as_simd_mut()`]
+    /// - [x] [`slice::binary_search()`]
+    /// - [x] [`slice::binary_search_by()`]
+    /// - [x] [`slice::binary_search_by_key()`]
+    /// - [ ] [`slice::chunks()`]
+    /// - [ ] [`slice::chunks_exact()`]
+    /// - [ ] [`slice::chunks_exact_mut()`]
+    /// - [ ] [`slice::chunks_mut()`]
+    /// - [ ] [`slice::clone_from_slice()`]
+    /// - [ ] [`slice::concat()`]
+    /// - [x] [`slice::contains()`]
+    /// - [ ] [`slice::copy_from_slice()`]
+    /// - [ ] [`slice::copy_within()`]
+    /// - [x] [`slice::ends_with()`]
+    /// - [ ] [`slice::fill()`]
+    /// - [ ] [`slice::fill_with()`]
+    /// - [x] [`slice::get()`]
+    /// - [ ] [`slice::get_many_mut()`]
+    /// - [ ] [`slice::get_many_unchecked_mut()`]
+    /// - [ ] [`slice::group_by()`]
+    /// - [ ] [`slice::group_by_mut()`]
+    /// - [ ] [`slice::is_empty()`]
+    /// - [ ] [`slice::is_sorted()`]
+    /// - [ ] [`slice::is_sorted_by_key()`]
+    /// - [x] [`slice::iter()`]
+    /// - [x] [`slice::iter_mut()`]
+    /// - [ ] [`slice::join()`]
+    /// - [ ] [`slice::partition_dedup()`]
+    /// - [ ] [`slice::partition_dedup_by()`]
+    /// - [ ] [`slice::partition_dedup_by_key()`]
+    /// - [ ] [`slice::rchunks()`]
+    /// - [ ] [`slice::rchunks_exact()`]
+    /// - [ ] [`slice::rchunks_exact_mut()`]
+    /// - [ ] [`slice::rchunks_mut()`]
+    /// - [ ] [`slice::repeat()`]
+    /// - [x] [`slice::reverse()`]
+    /// - [ ] [`slice::rotate_left()`]
+    /// - [ ] [`slice::rotate_right()`]
+    /// - [ ] [`slice::rsplit()`]
+    /// - [ ] [`slice::rsplit_array_mut()`]
+    /// - [ ] [`slice::rsplit_array_ref()`]
+    /// - [ ] [`slice::rsplit_mut()`]
+    /// - [ ] [`slice::rsplitn()`]
+    /// - [ ] [`slice::rsplitn_mut()`]
+    /// - [ ] [`slice::select_nth_unstable()`]
+    /// - [ ] [`slice::select_nth_unstable_by()`]
+    /// - [ ] [`slice::select_nth_unstable_by_key()`]
+    /// - [ ] [`slice::sort()`]
+    /// - [ ] [`slice::sort_by()`]
+    /// - [ ] [`slice::sort_by_key()`]
+    /// - [ ] [`slice::sort_by_cached_key()`]
+    /// - [x] [`slice::sort_unstable()`]
+    /// - [ ] [`slice::sort_unstable_by()`]
+    /// - [ ] [`slice::sort_unstable_by_key()`]
+    /// - [ ] [`slice::split()`]
+    /// - [ ] [`slice::split_array_mut()`]
+    /// - [ ] [`slice::split_array_ref()`]
+    /// - [x] [`slice::split_at()`]
+    /// - [x] [`slice::split_at_mut()`]
+    /// - [x] [`slice::split_at_mut_unchecked()`]
+    /// - [x] [`slice::split_at_unchecked()`]
+    /// - [ ] [`slice::split_inclusive()`]
+    /// - [ ] [`slice::split_mut()`]
+    /// - [ ] [`slice::splitn()`]
+    /// - [ ] [`slice::splitn_mut()`]
+    /// - [x] [`slice::starts_with()`]
+    /// - [x] [`slice::strip_prefix()`]
+    /// - [x] [`slice::strip_suffix()`]
+    /// - [x] [`slice::swap()`]
+    /// - [x] [`slice::swap_unchecked()`]
+    /// - [ ] [`slice::swap_with_slice()`]
+    /// - [ ] [`slice::take()`]
+    /// - [ ] [`slice::take_first()`]
+    /// - [ ] [`slice::take_first_mut()`]
+    /// - [ ] [`slice::take_last()`]
+    /// - [ ] [`slice::take_last_mut()`]
+    /// - [ ] [`slice::take_mut()`]
+    /// - [ ] [`slice::to_ascii_lowercase()`]
+    /// - [ ] [`slice::to_ascii_uppercase()`]
+    /// - [ ] [`slice::to_vec()`]
+    /// - [ ] [`slice::to_vec_in()`]
+    /// - [ ] [`slice::windows()`]
+    ///
     /// # TODO
     ///
     /// - [Allocator support][crate#allocator-support]
     ///
     /// - [Implicit dereferencing][crate#implicit-dereferencing]
     ///
-    /// ## Missing `Vec` and slice methods
-    ///
-    /// - `align_to_mut`
-    /// - `align_to`
-    /// - `append`
-    /// - `array_chunks_mut`
-    /// - `array_chunks`
-    /// - `array_windows`
-    /// - `as_chunks_mut`
-    /// - `as_chunks_unchecked_mut`
-    /// - `as_chunks_unchecked`
-    /// - `as_chunks`
-    /// - `as_rchunks_mut`
-    /// - `as_rchunks`
-    /// - `as_simd_mut`
-    /// - `as_simd`
-    /// - `chunks_exact_mut`
-    /// - `chunks_exact`
-    /// - `chunks_mut`
-    /// - `chunks`
-    /// - `clear`
-    /// - `clone_from_slice`
-    /// - `concat`
-    /// - `copy_from_slice`
-    /// - `copy_within`
-    /// - `dedup_by_key`
-    /// - `dedup_by`
-    /// - `dedup`
-    /// - `drain_filter`
-    /// - `drain`
-    /// - `extend_from_slice`
-    /// - `extend_from_within`
-    /// - `fill_with`
-    /// - `fill`
-    /// - `from_raw_parts_in`
-    /// - `get_many_mut`
-    /// - `get_many_unchecked_mut`
-    /// - `group_by_mut`
-    /// - `group_by`
-    /// - `insert`
-    /// - `into_boxed_slice`
-    /// - `into_flattened`
-    /// - `into_raw_parts_with_alloc`
-    /// - `into_raw_parts`
-    /// - `is_empty`
-    /// - `is_sorted_by_key`
-    /// - `is_sorted`
-    /// - `join`
-    /// - `leak`
-    /// - `new_in`
-    /// - `partition_dedup_by_key`
-    /// - `partition_dedup_by`
-    /// - `partition_dedup`
-    /// - `pop`
-    /// - `push_within_capacity`
-    /// - `rchunks_exact_mut`
-    /// - `rchunks_exact`
-    /// - `rchunks_mut`
-    /// - `rchunks`
-    /// - `remove`
-    /// - `repeat`
-    /// - `resize_with`
-    /// - `resize`
-    /// - `retain_mut`
-    /// - `retain`
-    /// - `rotate_left`
-    /// - `rotate_right`
-    /// - `rsplit_array_mut`
-    /// - `rsplit_array_ref`
-    /// - `rsplit_mut`
-    /// - `rsplit`
-    /// - `rsplitn_mut`
-    /// - `rsplitn`
-    /// - `select_nth_unstable_by_key`
-    /// - `select_nth_unstable_by`
-    /// - `select_nth_unstable`
-    /// - `set_len`
-    /// - `shrink_to_fit`
-    /// - `shrink_to`
-    /// - `sort_by_cached_key`
-    /// - `sort_by_key`
-    /// - `sort_by`
-    /// - `sort_unstable_by_key`
-    /// - `sort_unstable_by`
-    /// - `sort`
-    /// - `spare_capacity_mut`
-    /// - `splice`
-    /// - `split_array_mut`
-    /// - `split_array_ref`
-    /// - `split_at_spare_mut`
-    /// - `split_inclusive`
-    /// - `split_mut`
-    /// - `split_off`
-    /// - `split`
-    /// - `splitn_mut`
-    /// - `splitn`
-    /// - `swap_remove`
-    /// - `swap_with_slice`
-    /// - `take_first_mut`
-    /// - `take_first`
-    /// - `take_last_mut`
-    /// - `take_last`
-    /// - `take_mut`
-    /// - `take`
-    /// - `to_ascii_lowercase`
-    /// - `to_ascii_uppercase`
-    /// - `to_vec_in`
-    /// - `to_vec`
-    /// - `windows`
-    /// - `with_capacity_in`
 
     pub struct Vec<
         'name,
@@ -573,6 +672,7 @@ pub mod vec {
 
     /// A slice like `&[T]`
     /// but *known* to be of the named vector.
+    /// [{like}](crate#like):[`prim@slice`]
     pub struct Slice<'name, 'vec, T> {
         #[allow(missing_docs)]
         pub own: Link<'name, &'vec [T]>,
@@ -588,6 +688,7 @@ pub mod vec {
 
     /// A mutable slice like `&mut [T]`
     /// but *known* to be of the named vector.
+    /// [{like}](crate#like):[`prim@slice`]
     pub struct MutSlice<'name, 'vec, T> {
         #[allow(missing_docs)]
         pub own: Link<'name, &'vec mut [T]>,
@@ -603,6 +704,7 @@ pub mod vec {
 
     /// A pointer like `*const T`
     /// but *assumed* to be into the named vector.
+    /// [{like}](crate#like):[`pointer`]
     pub struct ConstPtr<'name, T> {
         #[allow(missing_docs)]
         pub own: Link<'name, *const T>,
@@ -618,6 +720,7 @@ pub mod vec {
 
     /// A mutable pointer like `*mut T`
     /// but *assumed* to be into the named vector.
+    /// [{like}](crate#like):[`pointer`]
     pub struct MutPtr<'name, T> {
         #[allow(missing_docs)]
         pub own: Link<'name, *mut T>,
@@ -638,7 +741,7 @@ pub mod vec {
     }
 
     impl<'name, T> Vec<'name, T> {
-        /// Like [`std::vec::Vec::new`]
+        /// [{like}](crate#like):[`std::vec::Vec::new`]
         pub fn new() -> Vec<
             'name,
             T,
@@ -646,7 +749,7 @@ pub mod vec {
             unsafe { Vec::from(forge(vec::Vec::new())) }
         }
 
-        /// Like [`std::vec::Vec::with_capacity`]
+        /// [{like}](crate#like):[`std::vec::Vec::with_capacity`]
         pub fn with_capacity(
             capacity: usize,
         ) -> Vec<
@@ -660,7 +763,7 @@ pub mod vec {
             }
         }
 
-        /// Like [`std::vec::Vec::from_raw_parts`]
+        /// [{like}](crate#like):[`std::vec::Vec::from_raw_parts`]
         pub unsafe fn from_raw_parts(
             ptr: *mut T,
             length: usize,
@@ -676,7 +779,7 @@ pub mod vec {
             }
         }
 
-        /// Like [`std::vec::Vec::capacity`]
+        /// [{like}](crate#like):[`std::vec::Vec::capacity`]
         ///
         /// # TODO
         ///
@@ -686,13 +789,13 @@ pub mod vec {
             self.own.capacity()
         }
 
-        /// Like [`std::vec::Vec::reserve`]
+        /// [{like}](crate#like):[`std::vec::Vec::reserve`]
 
         pub fn reserve(&mut self, additional: usize) -> () {
             unsafe { self.own.as_mut().reserve(additional) }
         }
 
-        /// Like [`std::vec::Vec::reserve_exact`]
+        /// [{like}](crate#like):[`std::vec::Vec::reserve_exact`]
         ///
         /// # TODO
         ///
@@ -707,7 +810,7 @@ pub mod vec {
             }
         }
 
-        /// Like [`std::vec::Vec::try_reserve_exact`]
+        /// [{like}](crate#like):[`std::vec::Vec::try_reserve_exact`]
 
         pub fn try_reserve_exact(
             &mut self,
@@ -722,9 +825,10 @@ pub mod vec {
     } // impl Vec
 
     impl<'before_truncate, T> Vec<'before_truncate, T> {
-        /// Like [`std::vec::Vec::truncate`] but **justified**.
+        /// [**{just}**](crate#just)
+        /// [{like}](crate#like):[`std::vec::Vec::truncate`]
         ///
-        /// Returns:
+        /// # Returns
         ///
         /// 0. Truncated vector
         /// 1. Proof that new keys are a subset of old keys
@@ -767,7 +871,7 @@ pub mod vec {
     } // impl Vec
 
     impl<'name, T> Vec<'name, T> {
-        /// Like [`std::vec::Vec::as_slice`]
+        /// [{like}](crate#like):[`std::vec::Vec::as_slice`]
         pub fn as_slice<'vec>(
             &'vec self,
         ) -> Slice<'name, 'vec, T>
@@ -777,7 +881,7 @@ pub mod vec {
             Slice::from(link(self.own.as_slice()))
         }
 
-        /// Like [`std::vec::Vec::as_mut_slice`]
+        /// [{like}](crate#like):[`std::vec::Vec::as_mut_slice`]
         pub fn as_mut_slice<'vec>(
             &'vec mut self,
         ) -> MutSlice<'name, 'vec, T>
@@ -789,19 +893,19 @@ pub mod vec {
             }))
         }
 
-        /// Like [`std::vec::Vec::as_ptr`]
+        /// [{like}](crate#like):[`std::vec::Vec::as_ptr`]
         pub unsafe fn as_ptr(&self) -> ConstPtr<'name, T> {
             ConstPtr::from(link(self.own.as_ptr()))
         }
 
-        /// Like [`std::vec::Vec::as_mut_ptr`]
+        /// [{like}](crate#like):[`std::vec::Vec::as_mut_ptr`]
         pub unsafe fn as_mut_ptr(
             &mut self,
         ) -> MutPtr<'name, T> {
             MutPtr::from(link(self.own.as_mut().as_mut_ptr()))
         }
 
-        /// Like [`slice::as_ptr_range()`]
+        /// [{like}](crate#like):[`slice::as_ptr_range()`]
         ///
         /// Since `Range` is half-open,
         /// the end point is *not* in the named vector.
@@ -816,7 +920,7 @@ pub mod vec {
                 ..ConstPtr::from(link(end))
         }
 
-        /// Like [`slice::as_mut_ptr_range()`]
+        /// [{like}](crate#like):[`slice::as_mut_ptr_range()`]
         ///
         /// # See Also
         ///
@@ -829,7 +933,8 @@ pub mod vec {
             MutPtr::from(link(start))..MutPtr::from(link(end))
         }
 
-        /// Like [`slice::swap()`] but **check-free**.
+        /// [**{free}**](crate#free)
+        /// [{like}](crate#like):[`slice::swap()`]
         pub fn swap(
             &mut self,
             a: Key<'name, usize>,
@@ -847,8 +952,16 @@ pub mod vec {
             }
         }
 
-
-        /// Like [`std::vec::Vec::push()`] but **justified**.
+        /// [**{just}**](crate#just)
+        /// {like}:[`std::vec::Vec::push()`]
+        ///
+        /// # Returns
+        ///
+        /// 0. Updated vector
+        /// 1. Key of newly pushed element
+        /// 2. Total mapping from old keys to new keys:
+        ///    dom(in) ⊂ dom(out)
+        ///
         pub fn push<'changed>(
             self,
             value: T,
@@ -869,7 +982,7 @@ pub mod vec {
             )
         }
 
-        /// Like [`std::vec::Vec::len`]
+        /// [{like}](crate#like):[`std::vec::Vec::len`]
         ///
         /// # TODO
         ///
@@ -878,7 +991,8 @@ pub mod vec {
             self.own.len()
         }
 
-        /// Safe `std::vec::Vec::swap_unchecked`
+        /// [**{safe}**](#safe)
+        /// [{like}](crate#like):[`slice::swap_unchecked`]
         pub fn swap_unchecked(
             &mut self,
             a: Key<'name, usize>,
@@ -889,13 +1003,14 @@ pub mod vec {
     } // impl Vec
 
     impl<'before_reverse, T> Vec<'before_reverse, T> {
-        /// Like [`slice::reverse()`] but **justified**.
+        /// [**{just}**](crate#just)
+        /// [{like}](crate#like):[`slice::reverse()`]
         ///
-        /// Returns:
+        /// # Returns
         ///
         /// 0. Vector reversed by key–value pairs
         /// 1. Witness that all old keys are valid new keys:
-        ///    dom(out) ≅ dom(in)
+        ///    dom(in) ≅ dom(out)
         ///
         pub fn reverse<'after_reverse>(
             self,
@@ -926,7 +1041,7 @@ pub mod vec {
     } // impl Vec
 
     impl<'name, T> Vec<'name, T> {
-        /// Like [`slice::reverse()`].
+        /// [{like}](crate#like):[`slice::reverse()`]
         ///
         /// All keys stay valid, but their values are reversed.
         /// To invalidate the keys too, use [`Self::reverse()`].
@@ -934,20 +1049,20 @@ pub mod vec {
             unsafe { self.own.as_mut().reverse() }
         }
 
-        /// Like [`slice::iter`]
+        /// [{like}](crate#like):[`slice::iter`]
 
         pub fn iter(&self) -> slice::Iter<'_, T> {
             self.own.iter()
         }
 
-        /// Like [`slice::iter_mut`]
+        /// [{like}](crate#like):[`slice::iter_mut`]
 
         pub fn iter_mut(&mut self) -> slice::IterMut<'_, T> {
             unsafe { self.own.as_mut().iter_mut() }
         }
 
-        /// Like [`slice::split_at()`] but
-        /// **check-free**.
+        /// [**{free}**](crate#free)
+        /// [{like}](crate#like):[`slice::split_at()`]
 
         pub fn split_at<'vec>(
             &'vec self,
@@ -968,8 +1083,8 @@ pub mod vec {
             }
         }
 
-        /// Like [`slice::split_at_mut()`] but
-        /// **check-free**.
+        /// [**{free}**](crate#free)
+        /// [{like}](crate#like):[`slice::split_at_mut()`]
 
         pub fn split_at_mut<'vec>(
             &'vec mut self,
@@ -996,7 +1111,8 @@ pub mod vec {
             }
         }
 
-        /// Safe `std::vec::Vec::split_at_unchecked`
+        /// [**{safe}**](crate#safe)
+        /// [{like}](crate#like):`slice::split_at_unchecked`
 
         pub fn split_at_unchecked<'vec>(
             &'vec self,
@@ -1008,7 +1124,8 @@ pub mod vec {
             self.split_at(mid)
         }
 
-        /// Safe `std::vec::Vec::split_at_mut_unchecked`
+        /// [**{safe}**](crate#safe)
+        /// [{like}](crate#like):[`slice::split_at_mut_unchecked`]
 
         pub fn split_at_mut_unchecked<'vec>(
             &'vec mut self,
@@ -1020,7 +1137,7 @@ pub mod vec {
             self.split_at_mut(mid)
         }
 
-        /// Like [`slice::contains`]
+        /// [{like}](crate#like):[`slice::contains`]
 
         pub fn contains(&self, x: &T) -> bool
         where
@@ -1029,7 +1146,7 @@ pub mod vec {
             self.own.contains(x)
         }
 
-        /// Like [`slice::starts_with`]
+        /// [{like}](crate#like):[`slice::starts_with`]
 
         pub fn starts_with(&self, needle: &[T]) -> bool
         where
@@ -1038,7 +1155,7 @@ pub mod vec {
             self.own.starts_with(needle)
         }
 
-        /// Like [`slice::ends_with`]
+        /// [{like}](crate#like):[`slice::ends_with`]
 
         pub fn ends_with(&self, needle: &[T]) -> bool
         where
@@ -1047,7 +1164,7 @@ pub mod vec {
             self.own.ends_with(needle)
         }
 
-        /// Like [`slice::strip_prefix`]
+        /// [{like}](crate#like):[`slice::strip_prefix`]
 
         pub fn strip_prefix<'vec, P>(
             &'vec self,
@@ -1063,7 +1180,7 @@ pub mod vec {
                 .map(|slice| Slice::from(link(slice)))
         }
 
-        /// Like [`slice::strip_suffix`]
+        /// [{like}](crate#like):[`slice::strip_suffix`]
 
         pub fn strip_suffix<'vec, P>(
             &'vec self,
@@ -1079,10 +1196,12 @@ pub mod vec {
                 .map(|slice| Slice::from(link(slice)))
         }
 
-        /// Like [`slice::binary_search`]
+        /// [**{just}**](crate#just)
+        /// [{like}](crate#like):[`slice::binary_search`]
         ///
-        /// The `Ok` index is guaranteed to be valid, but the
-        /// `Err` index may be `len()` (past the end).
+        /// The `Ok` index is guaranteed to be valid,
+        /// so we can wrap it in a `Key`.
+        /// The `Err` index may be `len()` (past the end).
 
         pub fn binary_search(
             &self,
@@ -1096,7 +1215,7 @@ pub mod vec {
             })
         }
 
-        /// Like [`slice::binary_search_by`]
+        /// [{like}](crate#like):[`slice::binary_search_by`]
 
         pub fn binary_search_by<F>(
             &self,
@@ -1110,7 +1229,7 @@ pub mod vec {
             })
         }
 
-        /// Like [`slice::binary_search_by_key`]
+        /// [{like}](crate#like):[`slice::binary_search_by_key`]
 
         pub fn binary_search_by_key<B, F>(
             &self,
@@ -1128,7 +1247,7 @@ pub mod vec {
             )
         }
 
-        /// Like [`slice::sort_unstable`]
+        /// [{like}](crate#like):[`slice::sort_unstable`]
 
         pub fn sort_unstable<'changed>(
             self,
@@ -1143,9 +1262,11 @@ pub mod vec {
             })
         }
 
-        /// Like [`std::collections::HashMap::contains_key()`]
-        /// but returning an `Option` of a `Key` instead of a
-        /// mere `bool`.
+        /// [**{just}**](crate#just)
+        /// [{like}](crate#like):[`std::collections::HashMap::contains_key()`]
+        ///
+        /// Instead of a mere yes-or-no `bool`,
+        /// we return an `Option` of a known-valid `Key`.
 
         pub fn contains_key(
             &self,
@@ -1156,7 +1277,8 @@ pub mod vec {
             })
         }
 
-        /// Like [`slice::get()`] but **check-free**.
+        /// [**{free}**](crate#free)
+        /// [{like}](crate#like):[`slice::get()`]
 
         pub fn get(&self, key: Key<'name, usize>) -> &T {
             unsafe { self.own.get_unchecked(key.index()) }
@@ -1216,12 +1338,12 @@ pub mod vec {
 
 pub mod vec_deque {
 
-    //! Like [`std::collections::vec_deque`].
+    //! [{like}](crate#like):[`std::collections::vec_deque`]
 
     use super::call::Call;
     use std::collections::vec_deque;
 
-    /// Like [`std::collections::VecDeque`].
+    /// [{like}](crate#like):[`std::collections::VecDeque`]
     ///
     /// # TODO
     ///
@@ -1235,12 +1357,12 @@ pub mod vec_deque {
 
 pub mod linked_list {
 
-    //! Like [`std::collections::linked_list`].
+    //! [{like}](crate#like):[`std::collections::linked_list`]
 
     use super::call::Call;
     use std::collections::linked_list;
 
-    /// Like [`std::collections::LinkedList`].
+    /// [{like}](crate#like):[`std::collections::LinkedList`]
     ///
     /// # TODO
     ///
@@ -1252,12 +1374,12 @@ pub mod linked_list {
 
 pub mod hash_map {
 
-    //! Like [`std::collections::hash_map`].
+    //! [{like}](crate#like):[`std::collections::hash_map`]
 
     use super::call::Call;
     use std::collections::hash_map;
 
-    /// Like [`std::collections::HashMap`].
+    /// [{like}](crate#like):[`std::collections::HashMap`]
     ///
     /// # TODO
     ///
@@ -1269,12 +1391,12 @@ pub mod hash_map {
 
 pub mod btree_map {
 
-    //! Like [`std::collections::btree_map`].
+    //! [{like}](crate#like):[`std::collections::btree_map`]
 
     use super::call::Call;
     use std::collections::btree_map;
 
-    /// Like [`std::collections::BTreeMap`].
+    /// [{like}](crate#like):[`std::collections::BTreeMap`]
     ///
     /// # TODO
     ///
@@ -1289,12 +1411,12 @@ pub mod btree_map {
 
 pub mod binary_heap {
 
-    //! Like [`std::collections::binary_heap`].
+    //! [{like}](crate#like):[`std::collections::binary_heap`]
 
     use super::call::Call;
     use std::collections::binary_heap;
 
-    /// Like [`std::collections::BinaryHeap`].
+    /// [{like}](crate#like):[`std::collections::BinaryHeap`]
     ///
     /// # TODO
     ///
@@ -1311,7 +1433,8 @@ pub mod key {
     use super::link::Link;
     use super::name::Name;
 
-    /// An `Index` that is known to be a valid key in `'name`.
+    /// A `Key<'name, Index>` is an `Index`
+    /// that is known to be a valid key in `'name`.
     #[derive(Copy, Clone)]
     pub struct Key<'name, Index> {
         own: Link<'name, Index>,
