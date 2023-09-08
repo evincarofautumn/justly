@@ -302,7 +302,6 @@ pub mod call {
     unsafe impl<'name, T> Only<'name> for Call<'name, T> {}
 
     impl<'name, T> Call<'name, T> {
-
         /// Forgets its own name.
         pub fn into_owned(self) -> T {
             self.link.body
@@ -317,7 +316,6 @@ pub mod call {
         pub unsafe fn as_mut(&mut self) -> &mut T {
             &mut self.link.body
         }
-
     }
 
     impl<'name, T> Deref for Call<'name, T> {
@@ -353,7 +351,6 @@ pub mod call {
             },
         }
     }
-
 }
 
 pub mod called {
@@ -663,10 +660,7 @@ pub mod vec {
     /// - [Implicit dereferencing][crate#implicit-dereferencing]
     ///
 
-    pub struct Vec<
-        'name,
-        T,
-    > {
+    pub struct Vec<'name, T> {
         own: Call<'name, vec::Vec<T>>,
     }
 
@@ -742,20 +736,12 @@ pub mod vec {
 
     impl<'name, T> Vec<'name, T> {
         /// [{like}](crate#like):[`std::vec::Vec::new`]
-        pub fn new() -> Vec<
-            'name,
-            T,
-        > {
+        pub fn new() -> Vec<'name, T> {
             unsafe { Vec::from(forge(vec::Vec::new())) }
         }
 
         /// [{like}](crate#like):[`std::vec::Vec::with_capacity`]
-        pub fn with_capacity(
-            capacity: usize,
-        ) -> Vec<
-            'name,
-            T,
-        > {
+        pub fn with_capacity(capacity: usize) -> Vec<'name, T> {
             unsafe {
                 Vec::from(forge(vec::Vec::with_capacity(
                     capacity,
@@ -768,10 +754,7 @@ pub mod vec {
             ptr: *mut T,
             length: usize,
             capacity: usize,
-        ) -> Vec<
-            'name,
-            T,
-        > {
+        ) -> Vec<'name, T> {
             unsafe {
                 Vec::from(forge(vec::Vec::from_raw_parts(
                     ptr, length, capacity,
@@ -821,7 +804,6 @@ pub mod vec {
                 self.own.as_mut().try_reserve_exact(additional)
             }
         }
-
     } // impl Vec
 
     impl<'before_truncate, T> Vec<'before_truncate, T> {
@@ -1349,10 +1331,8 @@ pub mod vec_deque {
     ///
     /// ## Missing `VecDeque` methods
     ///
-    pub type VecDeque<
-        'name,
-        T,
-    > = Call<'name, vec_deque::VecDeque<T>>;
+    pub type VecDeque<'name, T> =
+        Call<'name, vec_deque::VecDeque<T>>;
 }
 
 pub mod linked_list {
@@ -1402,11 +1382,8 @@ pub mod btree_map {
     ///
     /// ## Missing `BTreeMap` methods
     ///
-    pub type BTreeMap<
-        'name,
-        K,
-        V,
-    > = Call<'name, btree_map::BTreeMap<K, V>>;
+    pub type BTreeMap<'name, K, V> =
+        Call<'name, btree_map::BTreeMap<K, V>>;
 }
 
 pub mod binary_heap {
